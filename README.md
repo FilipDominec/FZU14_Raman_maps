@@ -4,7 +4,7 @@
 
 The dependencies of simple tool are Python 3.6+, Matplotlib and Numpy on any compatible operating system. 
 
-Run something like 
+Unpack this project into some directory and run something like 
 
     python FZU14_Raman_maps.py
 
@@ -24,7 +24,7 @@ To export the graph, one can click the diskette icon in the bottom toolbar. For 
 
 ## What you see in the graph
 
-For instance, by mapping an 24×24 μm square area with 2μm pitch, one gets 13×13 = 169 individual Raman spectra in the map.
+For instance, by mapping a 24×24μm square area with 2μm pitch including edges, one gets 13×13 = 169 individual Raman spectra in the map.
 The leftmost top graph presents an overview of these raw Raman spectra from the file. (Plotting 169 curves is inefficient, so, multiple spectra are aggregated into grey bands by quantiles: The light grey area contains 99.9% of all spectral points, the medium grey 99% and the dark grey 90% of them. The thick black line is simple average of all spectra, and short red curves are previews of the average spectrum in each selected band *after* background removal. )
 
 In top right part of the window, there are six sliders, which allow the user to shift and stretch spectral regions of interest. These are also seen in the spectral graph as semi-transparent red, green and blue bands. 
@@ -40,7 +40,7 @@ Note that, although meticulously tuned to provide best possible results on reali
 
 ## Programmer tips
 
-While this was intended as a quick-and-dirty tool to replace the not-user-friendly software from the Raman lab, it incorporates few non-trivial tricks that could be useful elsewhere:
+While this was intended as a quick-and-dirty tool to replace the cumbersone OEM software from the Raman lab, it incorporates few non-trivial tricks that could be useful elsewhere:
 
 * Isoluminant rainbow colormap (missing in matplotlib!)
 * Isoluminant two-color mapping (dtto)
@@ -48,6 +48,11 @@ While this was intended as a quick-and-dirty tool to replace the not-user-friend
 * The "parametrizer.py" module making it fairly easy to link the interactive sliders with plotting functions, along with automatic parameter saving/re-loading
 * The "spectral_preprocessing.py" module that employs battle-tested mathematical operations for Raman analysis. In particular, I have developed an original iterative rubber-band background detection to extract peak information even if there is relatively strong fluorescence. 
 * Auto-suggesting default export file name for Matplotlib interactive plot.
+
+
+## See also
+
+To browse, compare and process individual Raman spectra in Python environment, one may use https://github.com/FilipDominec/nihilnovi
 
 
 ## Acknowledgements
