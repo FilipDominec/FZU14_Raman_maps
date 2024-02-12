@@ -19,15 +19,17 @@ Once you are happy with the spectral band setup, it is advisable to click the [S
 
 To export the graph, one can click the diskette icon in the bottom toolbar. For publication, PDF export and some post-processing in a vector editor like Inkscape are advisable. 
 
+![example Raman mapping](example_map.jpg)
+
 
 ## What you see in the graph
-The leftmost top graph is an overview of the raw Raman spectra from the file. To save plotting time, multiple spectra are aggregated into grey bands ( 
 
-On its right side, there are six sliders, which allow the user to shift and stretch spectral regions of interest. These are also seen in the spectral graph as semi-transparent red, green and blue bands. 
+For instance, by mapping an 24×24 μm square area with 2μm pitch, one gets 13×13 = 169 individual Raman spectra in the map.
+The leftmost top graph presents an overview of these raw Raman spectra from the file. (Plotting 169 curves is inefficient, so, multiple spectra are aggregated into grey bands by quantiles: The light grey area contains 99.9% of all spectral points, the medium grey 99% and the dark grey 90% of them. The thick black line is simple average of all spectra, and short red curves are previews of the average spectrum in each selected band *after* background removal. )
+
+In top right part of the window, there are six sliders, which allow the user to shift and stretch spectral regions of interest. These are also seen in the spectral graph as semi-transparent red, green and blue bands. 
 
 Middle row shows the intensity of the spectral bands, along with their effective FWHM width. The intensity is encoded simply as brightness, the width is plotted in false colour with a custom isoluminant green-grey-pink colormap. Ignoring this colormap, the middle row of graphs is most useful for identifying the location of the material corresponding to the selected peak. 
-
-![example Raman mapping](example_map.jpg)
 
 Bottom rows show, again, the intensity encoded as brightness, but the rainbow isoluminant colormap corresponds to spectral position of the peak. 
 
@@ -45,6 +47,7 @@ While this was intended as a quick-and-dirty tool to replace the not-user-friend
 * Feature that multiplies these colormaps with brightness function to show two quantities in one 2-D image, and adds correct double colorbars. 
 * The "parametrizer.py" module making it fairly easy to link the interactive sliders with plotting functions, along with automatic parameter saving/re-loading
 * The "spectral_preprocessing.py" module that employs battle-tested mathematical operations for Raman analysis. In particular, I have developed an original iterative rubber-band background detection to extract peak information even if there is relatively strong fluorescence. 
+* Auto-suggesting default export file name for Matplotlib interactive plot.
 
 
 ## Acknowledgements
