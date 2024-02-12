@@ -38,13 +38,13 @@ Note that, although meticulously tuned to provide best possible results on reali
 
 ## Programmer tips
 
-While this was intended as a quick-and-dirty tool to replace the not-user-friendly software from the Raman lab, it incorporates few potentially useful tricks that could be useful elsewhere:
+While this was intended as a quick-and-dirty tool to replace the not-user-friendly software from the Raman lab, it incorporates few non-trivial tricks that could be useful elsewhere:
 
 * Isoluminant rainbow colormap (missing in matplotlib!)
 * Isoluminant two-color mapping (dtto)
-* Feature that multiplies these colormaps with brightness function to show two quantities in one 2-D image.
+* Feature that multiplies these colormaps with brightness function to show two quantities in one 2-D image, and adds correct double colorbars. 
 * The "parametrizer.py" module making it fairly easy to link the interactive sliders with plotting functions, along with automatic parameter saving/re-loading
-* spectral_preprocessing.py module that employs battle-tested mathematical operations. In particular, I have developed an original iterative rubber-band background detection to get useful Raman peak information even if there is relatively strong fluorescence. 
+* The "spectral_preprocessing.py" module that employs battle-tested mathematical operations for Raman analysis. In particular, I have developed an original iterative rubber-band background detection to extract peak information even if there is relatively strong fluorescence. 
 
 
 ## Acknowledgements
@@ -53,7 +53,7 @@ While this was intended as a quick-and-dirty tool to replace the not-user-friend
 
 Licensed under MIT license terms
 
-The development & testing of this application was performed at the Semiconductor department of the Institute of Physics, Czech Academy of Sciences. 
+The development & testing of this application was performed at the Semiconductor department 14 of the FZU - Institute of Physics, Czech Academy of Sciences. 
 
 Special thanks to Dr. Karla Kuldová and Robert Horešovský for providing data and valuable feedback. 
 
