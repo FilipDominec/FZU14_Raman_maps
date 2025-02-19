@@ -14,6 +14,7 @@ import spectral_preprocessing
 import parametrizer
 
 # Static settings
+#x_label, y_label = 'PL peak (nm)', 'Intensity (a.u.)'
 x_label, y_label = 'Raman peak (cm⁻¹)', 'Intensity (a.u.)'
 interp_style = 'hanning'
 interp_style2 = 'hanning'
@@ -24,28 +25,52 @@ if len(sys.argv) >= 2:
     filename = sys.argv[1]
 else:
     import tkinter
+    import tkinter.filedialog as fd
     root = tkinter.Tk() 
     # at least on Ubuntu, I had trouble with the interactive plot opening in background, found no solution
     #root.wm_attributes('-topmost', -1) 
     root.withdraw()
     #root.iconify()
-    filename = tkinter.filedialog.askopenfilename(filetypes=[("Converted Labspec L6M maps", "*.txt"), ("All files", "*.*"),])
+    filename = fd.askopenfilename(filetypes=[("Converted Labspec L6M maps", "*.txt"), ("All files", "*.*"),])
     #root.destroy()
     #time.sleep(1)
 
-matplotlib.rcParams["savefig.directory"] = Path(filename).resolve().parent # easier saving of output graph
+#matplotlib.rcParams["savefig.directory"] = Path(filename).resolve().parent # easier saving of output graph FIXME
+# TypeError: expected str, bytes or os.PathLike object, not tuple
+
 #matplotlib.rcParams["tk.window_focus"] = True
 #
-wl = np.genfromtxt(filename, unpack=True, max_rows=1) # 1st row is the spectral ordinate (nm or reciprocal cm)
-raw = np.genfromtxt(filename, unpack=True, skip_header=1)
-x, y, rawI = np.unique(raw[0]), np.unique(raw[1]), raw[2:] # interpret three columns
-if not DEBUG: 
-    I = rawI.reshape([len(wl), len(x), len(y)])
-else:
-    I = rawI.reshape([len(wl), len(x), len(y)])[::2, ::2, ::2] # for debug only: decimate data to plot it quicker
-    wl = wl[::2]
 
-## Raman spectra preprocessing
+## Old text format from Horiba
+#wl = np.genfromtxt(filename, unpack=True, max_rows=1) # 1st row is the spectral ordinate (nm or reciprocal cm)
+#raw = np.genfromtxt(filename, unpack=True, skip_header=1)
+#x, y, rawI = np.unique(raw[0]), np.unique(raw[1]), raw[2:] # interpret three columns
+#if not DEBUG: 
+    #I = rawI.reshape([len(wl), len(x), len(y)])
+#else:
+    #I = rawI.reshape([len(wl), len(x), len(y)])[::2, ::2, ::2] # for debug only: decimate data to plot it quicker
+    #wl = wl[::2]
+
+## New text format from Horiba/Robert H.
+
+#Relative X
+with open(filename) as of:
+    for n,l in enumerate(of.readlines()):
+        if 'Relative X' in l: line_relX = n
+        if 'Relative Y' in l: line_relY = n
+        if 'Counts' in l: line_relCounts = n
+
+    of.seek(0)
+    x = np.unique(np.genfromtxt(of, unpack=True, skip_header=line_relX, max_rows=1)[3:]) # index 33 should be the first after empty line
+    of.seek(0)
+    y = np.unique(np.genfromtxt(of, unpack=True, skip_header=line_relY, max_rows=1)[3:]) # and below this line
+    of.seek(0)
+    raw = np.genfromtxt(of, unpack=True, skip_header=line_relCounts+1) # 36 comes from #line containing 'Counts'
+print('counts.shape', raw[1:,:].shape, x, y)
+wl = raw[0,:]
+I = raw[1:,:].T.reshape([len(wl), len(x), len(y)])
+
+## spectra preprocessing
 I = np.apply_along_axis(spectral_preprocessing.retouch_outliers, 0, I)
 I = np.apply_along_axis(spectral_preprocessing.smooth, 0, I)
 I = np.apply_along_axis(spectral_preprocessing.rm_bg, 0, I)
@@ -54,6 +79,7 @@ I = np.apply_along_axis(spectral_preprocessing.norm, 0, I)
 
 ## Generate custom colormaps
 def isoluminant_rainbow_rgb(val):
+    val = np.pi-val  ## reversed
     return (1+np.cos((val)*np.pi))*.35, (1+np.cos((val-2/3)*np.pi))*.25, (1+np.cos((val-4/3)*np.pi))*.5
 def isoluminant_greenpink_rgb(val):
     return val**.8*.8, (1-val**1.5)*.5, val**.8
@@ -64,6 +90,7 @@ def cmap_segmentize(fn):
         [channel,      [[x]+[fn(x)[channel_idx]]*2 for x in np.linspace(0,1)]] 
         for (channel_idx,channel) in enumerate(('red', 'green', 'blue'))])
 
+## Colormaps are for colorbars (main plots compose each pixel's RGB colors procedurally)
 isolum_rainbow_colormap = matplotlib.colors.LinearSegmentedColormap('isolum_rainbow_colormap', cmap_segmentize(isoluminant_rainbow_rgb), 50)
 isolum_greenpink_colormap = matplotlib.colors.LinearSegmentedColormap('isolum_greenpink_colormap', cmap_segmentize(isoluminant_greenpink_rgb), 50)
 brightness_colormap = matplotlib.colors.LinearSegmentedColormap('brightness_colormap', cmap_segmentize(greyscale_rgb), 50)
@@ -100,9 +127,10 @@ def generate_subplots():
     axs[0,0].fill_between(wl, np.quantile(Iflat, .1, axis=1), np.quantile(Iflat, .9, axis=1), alpha=.5, color='k')
     axs[0,0].set_xlabel(x_label); 
     axs[0,0].set_ylabel(y_label); 
+    axs[0,0].set_xlim(xmin=min(wl), xmax=max(wl)); 
     axs[0,0].grid()
 
-    for c in 'rgb':
+    for c in 'bgr':
         hs.append(axs[0,0].axvspan(100,200, facecolor=c, alpha=0.3))
 
     ## 2D maps 
@@ -131,7 +159,7 @@ def generate_subplots():
         cims.append(axs[2,i].imshow(np.abs(zs[i])**.3, interpolation=interp_style, cmap=None))
         #cims_overlay.append(axs[2,i].imshow(np.abs(zs[i])**.3, interpolation=interp_style2, cmap=None))
         cbars.append(plt.colorbar(matplotlib.cm.ScalarMappable(norm=None, cmap=isolum_rainbow_colormap), ax=axs[2,i], pad=-0.05))
-        cbars[-1].ax.set_title(f'position of {x_label}', rotation='vertical', x=.65, y=.5, 
+        cbars[-1].ax.set_title(f'wavelength of {x_label}', rotation='vertical', x=.65, y=.5, 
                 fontsize=8, fontweight='semibold', color='white', verticalalignment='center')
         cbars[-1].ax.tick_params(size=0, labelsize=8)
         cbars[-1].outline.set_visible(False)
@@ -166,6 +194,7 @@ def update_plots(slider_name, new_value):
     for bandn in range(1,3+1): 
         if not slider_name or (slider_name.startswith('band') and bandn==int(slider_name.lstrip('band')[0])):
             center_cm, width_cm = p.get(f'band{bandn}c'), p.get(f'band{bandn}w')
+            print(center_cm, width_cm)
             left_cm, right_cm = center_cm-width_cm/2, center_cm+width_cm/2
             left_cm = max(min(wl), left_cm)
             right_cm = min(max(wl), right_cm)
@@ -223,7 +252,6 @@ def update_plots(slider_name, new_value):
 
 
             #3rd row
-
             rgb_values2 = np.dstack([brightness*ar for ar in isoluminant_rainbow_rgb(peak_positions_normed)])
             rgb_values2[np.where(np.isnan(rgb_values2))] = 0
             cims[bandn-1].set( data=rgb_values2, clim=(0, 1)) # np.nanmax(rgb_values2)))
@@ -239,13 +267,14 @@ def update_plots(slider_name, new_value):
     fig.canvas.draw_idle()
     fig.canvas.flush_events()
 
+wl1, wl2, wlr = np.min(wl), np.max(wl), np.max(wl)-np.min(wl)
 default_params = collections.OrderedDict([
-    ['band1c',     (0,      np.max(wl)*.25, np.max(wl))],
-    ['band1w',     (0,      np.max(wl)/6,   np.max(wl))],
-    ['band2c',     (0,      np.max(wl)*.5,  np.max(wl))],
-    ['band2w',     (0,      np.max(wl)/6,   np.max(wl))],
-    ['band3c',     (0,      np.max(wl)*.75, np.max(wl))],
-    ['band3w',     (0,      np.max(wl)/6,   np.max(wl))],
+    ['band1c',     (wl1,    wl1+wlr*.25, wl2)],
+    ['band1w',     (0,      wlr/6,   wlr)],
+    ['band2c',     (wl1,    wl1+wlr*.5,  wl2)],
+    ['band2w',     (0,      wlr/6,   wlr)],
+    ['band3c',     (wl1,    wl1+wlr*.75, wl2)],
+    ['band3w',     (0,      wlr/6,   wlr)],
     ])
 
 generate_subplots()

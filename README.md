@@ -57,7 +57,7 @@ To browse, compare and process individual Raman spectra in Python environment, o
 
 ## Acknowledgements
 
-(c) Filip Dominec 2022-2024
+(c) Filip Dominec 2022-2025
 
 Licensed under MIT license terms
 
